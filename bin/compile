@@ -13,11 +13,19 @@ VENDOR_DIR="vendor"
 if [ -f "$ENV_DIR/FFMPEG_VERSION" ]
 then
   FFMPEG_VERSION="$(cat $ENV_DIR/FFMPEG_VERSION)"
+  DOWNLOAD_URL="https://www.johnvansickle.com/ffmpeg/old-releases/ffmpeg-$FFMPEG_VERSION-64bit-static.tar.xz"
+  if curl -s --head --request GET $DOWNLOAD_URL | grep "404" > /dev/null
+  then
+    DOWNLOAD_URL="https://www.johnvansickle.com/ffmpeg/releases/ffmpeg-$FFMPEG_VERSION-64bit-static.tar.xz"
+  fi
 else
-  FFMPEG_VERSION="release"
+  DOWNLOAD_URL="https://www.johnvansickle.com/ffmpeg/releases/ffmpeg-release-64bit-static.tar.xz"
 fi
 
-DOWNLOAD_URL="https://www.johnvansickle.com/ffmpeg/releases/ffmpeg-$FFMPEG_VERSION-64bit-static.tar.xz"
+if curl -s --head --request GET $DOWNLOAD_URL | grep "404" > /dev/null
+then
+  exit 1
+fi
 
 echo "DOWNLOAD_URL = " $DOWNLOAD_URL | indent
 
