@@ -10,9 +10,9 @@ BUILD_DIR=$1
 ENV_DIR=$3
 VENDOR_DIR="vendor"
 
-if [ -f "$ENV_DIR/FFMPEG_VERSION" ]
+if [ -f "$BUILD_DIR/.ffmpeg_version" ]
 then
-  FFMPEG_VERSION="$(cat $ENV_DIR/FFMPEG_VERSION)"
+  FFMPEG_VERSION="$(cat $BUILD_DIR/.ffmpeg_version)"
   DOWNLOAD_URL="https://www.johnvansickle.com/ffmpeg/old-releases/ffmpeg-$FFMPEG_VERSION-64bit-static.tar.xz"
   if curl -s --head --request GET $DOWNLOAD_URL | grep "404" > /dev/null
   then
