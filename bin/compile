@@ -16,10 +16,18 @@ then
   DOWNLOAD_URL="https://www.johnvansickle.com/ffmpeg/old-releases/ffmpeg-$FFMPEG_VERSION-64bit-static.tar.xz"
   if curl -s --head --request GET $DOWNLOAD_URL | grep "404" > /dev/null
   then
-    DOWNLOAD_URL="https://www.johnvansickle.com/ffmpeg/releases/ffmpeg-$FFMPEG_VERSION-64bit-static.tar.xz"
+    DOWNLOAD_URL="https://www.johnvansickle.com/ffmpeg/old-releases/ffmpeg-$FFMPEG_VERSION-amd64-static.tar.xz"
+    if curl -s --head --request GET $DOWNLOAD_URL | grep "404" > /dev/null
+    then
+      DOWNLOAD_URL="https://www.johnvansickle.com/ffmpeg/releases/ffmpeg-$FFMPEG_VERSION-64bit-static.tar.xz"
+      if curl -s --head --request GET $DOWNLOAD_URL | grep "404" > /dev/null
+      then
+        DOWNLOAD_URL="https://www.johnvansickle.com/ffmpeg/releases/ffmpeg-$FFMPEG_VERSION-amd64-static.tar.xz"
+      fi
+    fi
   fi
 else
-  DOWNLOAD_URL="https://www.johnvansickle.com/ffmpeg/releases/ffmpeg-release-64bit-static.tar.xz"
+  DOWNLOAD_URL="https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz"
 fi
 
 if curl -s --head --request GET $DOWNLOAD_URL | grep "404" > /dev/null
