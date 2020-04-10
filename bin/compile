@@ -32,6 +32,7 @@ fi
 
 if curl -s --head --request GET $DOWNLOAD_URL | grep "404" > /dev/null
 then
+  echo 'Attention: Given FFMPEG version was not found on https://johnvansickle.com/ffmpeg/'
   exit 1
 fi
 
@@ -42,7 +43,12 @@ mkdir -p $VENDOR_DIR
 cd $VENDOR_DIR
 mkdir -p ffmpeg
 cd ffmpeg
-curl -L --silent $DOWNLOAD_URL | tar xJ --strip-components=1
+
+if ! curl -L --silent $DOWNLOAD_URL | tar xJ --strip-components=1
+then
+  echo 'Attention: Downloading and unzipping failed'
+  exit 1
+fi
 
 echo "exporting PATH" | indent
 PROFILE_PATH="$BUILD_DIR/.profile.d/ffmpeg.sh"
