@@ -4,39 +4,38 @@ indent() {
   sed -u 's/^/       /'
 }
 
-echo "-----> Install ffmpeg"
+echo "-----> Install FFMPEG"
 
 BUILD_DIR=$1
 ENV_DIR=$3
 VENDOR_DIR="vendor"
+DOWNLOAD_BASE_URL="https://hinterviewpublicnew-eu.s3.eu-central-1.amazonaws.com/ffmpeg-builds"
 
 if [ -f "$BUILD_DIR/.ffmpeg_version" ]
 then
   FFMPEG_VERSION="$(cat $BUILD_DIR/.ffmpeg_version)"
-  DOWNLOAD_URL="https://www.johnvansickle.com/ffmpeg/old-releases/ffmpeg-$FFMPEG_VERSION-64bit-static.tar.xz"
-  if curl -s --head --request GET $DOWNLOAD_URL | grep "404" > /dev/null
-  then
-    DOWNLOAD_URL="https://www.johnvansickle.com/ffmpeg/old-releases/ffmpeg-$FFMPEG_VERSION-amd64-static.tar.xz"
-    if curl -s --head --request GET $DOWNLOAD_URL | grep "404" > /dev/null
-    then
-      DOWNLOAD_URL="https://www.johnvansickle.com/ffmpeg/releases/ffmpeg-$FFMPEG_VERSION-64bit-static.tar.xz"
-      if curl -s --head --request GET $DOWNLOAD_URL | grep "404" > /dev/null
-      then
-        DOWNLOAD_URL="https://www.johnvansickle.com/ffmpeg/releases/ffmpeg-$FFMPEG_VERSION-amd64-static.tar.xz"
-      fi
-    fi
-  fi
 else
-  DOWNLOAD_URL="https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz"
+  FFMPEG_VERSION="4.4"
 fi
 
-if curl -s --head --request GET $DOWNLOAD_URL | grep "404" > /dev/null
+FFMPEG_DOWNLOAD_URL="$DOWNLOAD_BASE_URL/$FFMPEG_VERSION/ffmpeg"
+
+if curl -s --head --request GET $FFMPEG_DOWNLOAD_URL | grep "404" > /dev/null
 then
-  echo 'Attention: Given FFMPEG version was not found on https://johnvansickle.com/ffmpeg/'
+  echo "Attention: Given FFMPEG version was not found on $FFMPEG_DOWNLOAD_URL"
   exit 1
 fi
 
-echo "DOWNLOAD_URL = " $DOWNLOAD_URL | indent
+FFPROBE_DOWNLOAD_URL="$DOWNLOAD_BASE_URL/$FFMPEG_VERSION/ffprobe"
+
+if curl -s --head --request GET $FFPROBE_DOWNLOAD_URL | grep "404" > /dev/null
+then
+  echo "Attention: Given FFPROBE version was not found on $FFPROBE_DOWNLOAD_URL"
+  exit 1
+fi
+
+echo "FFMPEG_DOWNLOAD_URL = " $FFMPEG_DOWNLOAD_URL | indent
+echo "FFPROBE_DOWNLOAD_URL = " $FFPROBE_DOWNLOAD_URL | indent
 
 cd $BUILD_DIR
 mkdir -p $VENDOR_DIR
@@ -44,11 +43,21 @@ cd $VENDOR_DIR
 mkdir -p ffmpeg
 cd ffmpeg
 
-if ! curl -L --silent $DOWNLOAD_URL | tar xJ --strip-components=1
+if ! curl -L --silent $FFMPEG_DOWNLOAD_URL --output ffmpeg
 then
-  echo 'Attention: Downloading and unzipping failed'
+  echo 'Attention: Downloading ffmpeg failed'
   exit 1
 fi
+
+chmod u+x ./ffmpeg
+
+if ! curl -L --silent $FFPROBE_DOWNLOAD_URL --output ffprobe
+then
+  echo 'Attention: Downloading ffprobe failed'
+  exit 1
+fi
+
+chmod u+x ./ffprobe
 
 echo "exporting PATH" | indent
 PROFILE_PATH="$BUILD_DIR/.profile.d/ffmpeg.sh"
