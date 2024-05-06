@@ -19,13 +19,14 @@ else
 fi
 
 FFMPEG_DOWNLOAD_URL="$DOWNLOAD_BASE_URL/$FFMPEG_VERSION/ffmpeg"
-FFPROBE_DOWNLOAD_URL="$DOWNLOAD_BASE_URL/$FFMPEG_VERSION/ffprobe"
 
 if curl -s --head --request GET $FFMPEG_DOWNLOAD_URL | grep "404" > /dev/null
 then
   echo "Attention: Given FFMPEG version was not found on $FFMPEG_DOWNLOAD_URL"
   exit 1
 fi
+
+FFPROBE_DOWNLOAD_URL="$DOWNLOAD_BASE_URL/$FFMPEG_VERSION/ffprobe"
 
 if curl -s --head --request GET $FFPROBE_DOWNLOAD_URL | grep "404" > /dev/null
 then
@@ -42,25 +43,28 @@ cd $VENDOR_DIR
 mkdir -p ffmpeg
 cd ffmpeg
 
-# Clone the FFmpeg source code and build with LAME support
-git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg-src
-cd ffmpeg-src
+if ! curl -L --silent $FFMPEG_DOWNLOAD_URL --output ffmpeg
+then
+  echo 'Attention: Downloading ffmpeg failed'
+  exit 1
+fi
 
-./configure --enable-libmp3lame
-make -j$(nproc)
-make install
+chmod u+x ./ffmpeg
 
-# Move FFmpeg binaries to the appropriate directory
-mv /usr/local/bin/ffmpeg ..
-mv /usr/local/bin/ffprobe ..
+if ! curl -L --silent $FFPROBE_DOWNLOAD_URL --output ffprobe
+then
+  echo 'Attention: Downloading ffprobe failed'
+  exit 1
+fi
 
-# Cleanup source code
-cd ..
-rm -rf ffmpeg-src
-
-chmod u+x ./ffmpeg ./ffprobe
+chmod u+x ./ffprobe
 
 echo "exporting PATH" | indent
 PROFILE_PATH="$BUILD_DIR/.profile.d/ffmpeg.sh"
 mkdir -p $(dirname $PROFILE_PATH)
 echo 'export PATH="$PATH:${HOME}/vendor/ffmpeg"' >> $PROFILE_PATH
+cd ffmpeg
+./configure --enable-libmp3lame
+make
+make install
+echo 'done'
