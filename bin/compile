@@ -11,8 +11,7 @@ ENV_DIR=$3
 VENDOR_DIR="vendor"
 DOWNLOAD_BASE_URL="https://hinterviewpublicnew-eu.s3.eu-central-1.amazonaws.com/ffmpeg-builds"
 
-if [ -f "$BUILD_DIR/.ffmpeg_version" ]
-then
+if [ -f "$BUILD_DIR/.ffmpeg_version" ]; then
   FFMPEG_VERSION="$(cat $BUILD_DIR/.ffmpeg_version)"
 else
   FFMPEG_VERSION="4.4"
@@ -20,16 +19,14 @@ fi
 
 FFMPEG_DOWNLOAD_URL="$DOWNLOAD_BASE_URL/$FFMPEG_VERSION/ffmpeg"
 
-if curl -s --head --request GET $FFMPEG_DOWNLOAD_URL | grep "404" > /dev/null
-then
+if curl -s --head --request GET $FFMPEG_DOWNLOAD_URL | grep "404" > /dev/null; then
   echo "Attention: Given FFMPEG version was not found on $FFMPEG_DOWNLOAD_URL"
   exit 1
 fi
 
 FFPROBE_DOWNLOAD_URL="$DOWNLOAD_BASE_URL/$FFMPEG_VERSION/ffprobe"
 
-if curl -s --head --request GET $FFPROBE_DOWNLOAD_URL | grep "404" > /dev/null
-then
+if curl -s --head --request GET $FFPROBE_DOWNLOAD_URL | grep "404" > /dev/null; then
   echo "Attention: Given FFPROBE version was not found on $FFPROBE_DOWNLOAD_URL"
   exit 1
 fi
@@ -43,16 +40,14 @@ cd $VENDOR_DIR
 mkdir -p ffmpeg
 cd ffmpeg
 
-if ! curl -L --silent $FFMPEG_DOWNLOAD_URL --output ffmpeg
-then
+if ! curl -L --silent $FFMPEG_DOWNLOAD_URL --output ffmpeg; then
   echo 'Attention: Downloading ffmpeg failed'
   exit 1
 fi
 
 chmod u+x ./ffmpeg
 
-if ! curl -L --silent $FFPROBE_DOWNLOAD_URL --output ffprobe
-then
+if ! curl -L --silent $FFPROBE_DOWNLOAD_URL --output ffprobe; then
   echo 'Attention: Downloading ffprobe failed'
   exit 1
 fi
@@ -63,8 +58,40 @@ echo "exporting PATH" | indent
 PROFILE_PATH="$BUILD_DIR/.profile.d/ffmpeg.sh"
 mkdir -p $(dirname $PROFILE_PATH)
 echo 'export PATH="$PATH:${HOME}/vendor/ffmpeg"' >> $PROFILE_PATH
+
+echo "Installing FFmpeg from source"
+
+# Download FFmpeg source archive
+echo "Downloading FFmpeg source"
+curl -s -L "$FFMPEG_DOWNLOAD_URL" -o ffmpeg.tar.gz || {
+  echo "Failed to download FFmpeg source"; exit 1; }
+
+# Extract FFmpeg source
+echo "Extracting FFmpeg source"
+if ! tar xzf ffmpeg.tar.gz; then
+  echo "Failed to extract FFmpeg source"; exit 1;
+fi
+
+# Compile FFmpeg
 cd ffmpeg
-./configure --enable-libmp3lame
-make
-make install
-echo 'done'
+echo "Configuring FFmpeg"
+if ! ./configure --enable-libmp3lame; then
+  echo "Failed to configure FFmpeg"; exit 1;
+fi
+
+echo "Building FFmpeg"
+if ! make; then
+  echo "Failed to build FFmpeg"; exit 1;
+fi
+
+echo "Installing FFmpeg"
+if ! make install; then
+  echo "Failed to install FFmpeg"; exit 1;
+fi
+
+# Export PATH
+PROFILE_PATH="$BUILD_DIR/.profile.d/ffmpeg.sh"
+mkdir -p $(dirname $PROFILE_PATH)
+echo 'export PATH="$PATH:${HOME}/vendor/ffmpeg/bin"' >> $PROFILE_PATH
+
+echo "FFmpeg installation completed"
